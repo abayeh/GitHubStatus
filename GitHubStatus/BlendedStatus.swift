@@ -12,18 +12,4 @@ enum BlendedStatus: String, Codable, CaseIterable {
     minorserviceoutage = "Minor Service Outage",
     partialsystemoutage = "Partial System Outage",
     majorserviceoutage = "Major Service Outage"
-    
-    var type: String{
-        switch self {
-            
-        case .allsystemsoperational:
-            return "All Systems Operational"
-        case .minorserviceoutage:
-            return "Minor Service Outage"
-        case .partialsystemoutage:
-            return "Partial System Outage"
-        case .majorserviceoutage:
-            return "Major Service Outage"
-        }
-    }
 }

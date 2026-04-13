@@ -11,19 +11,5 @@ enum OverallIndicator: String, Codable, CaseIterable {
     case none = "none",
     minor = "minor",
     major = "major",
-    critical = "cirtical"
-    
-    var type: String{
-        switch self {
-            
-        case .none:
-            return "none"
-        case .minor:
-            return "minor"
-        case .major:
-            return "major"
-        case .critical:
-            return "critical"
-        }
-    }
+    critical = "critical"
 }

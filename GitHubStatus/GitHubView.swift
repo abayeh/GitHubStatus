@@ -9,84 +9,85 @@ import SwiftUI
 
 struct GitHubView: View {
     @StateObject private var viewModel = ComponentViewModel()
-    @State private var timer: Timer? = nil
+    @State private var refreshRotation: Double = 0
 
     var body: some View {
-        VStack(alignment: .leading) {
-            // Button to manually fetch components
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Spacer() // Pushes everything to the center
-                Button(action: {
-                    viewModel.fetchComponents()
-                }) {
-                    Text("Fetch Status")
-                }
                 Spacer()
-            }
-
-            HStack {
-                Spacer() // Pushes everything to the center
-                // Display last updated time
                 if let lastUpdated = viewModel.lastUpdated {
                     Text("Updated \(formattedDate(lastUpdated))")
                         .font(.footnote)
-                        .foregroundColor(.gray)
-                        .padding(.bottom, 10)
+                        .foregroundColor(.secondary)
+                }
+                Button(action: {
+                    viewModel.fetchComponents()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .rotationEffect(.degrees(refreshRotation))
+                        .animation(.easeInOut(duration: 0.3), value: refreshRotation)
+                }
+                .buttonStyle(.plain)
+                .onReceive(viewModel.$lastUpdated) { _ in
+                    withAnimation {
+                        refreshRotation += 360
+                    }
                 }
                 Spacer()
             }
-            
-            // Iterate over the components and display each status
-            ForEach(viewModel.components.filter { $0.name != "Visit www.githubstatus.com for more information" }, id: \.id) { component in
-                HStack {
-                    Circle()
-                        .fill(component.status.color)
-                        .frame(width: 12, height: 12)
-                    
-                    VStack(alignment: .leading) {
-                        Text(component.name)
-                            .font(.headline)
-                        
-                        Text(component.status.type)
-                            .font(.subheadline)
-                            .foregroundColor(component.status.color)
+
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 4)
+            }
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 6) {
+                    ForEach(viewModel.components.filter { $0.name != "Visit www.githubstatus.com for more information" }, id: \.id) { component in
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(component.status.color)
+                                .frame(width: 10, height: 10)
+
+                            Text(component.name)
+                                .font(.subheadline)
+
+                            Spacer()
+
+                            Text(component.status.type)
+                                .font(.caption)
+                                .foregroundColor(component.status.color)
+                        }
                     }
                 }
-                .padding(.vertical, 2)
             }
-            Spacer()
+
             HStack {
-                Spacer() // Pushes everything to the center
-                Button("Close Program") {
+                Spacer()
+                Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
-                Spacer() // Ensures the button stays centered
+                .buttonStyle(.plain)
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                Spacer()
             }
+            .padding(.top, 4)
         }
         .padding()
+        .frame(minWidth: 280, idealWidth: 300, maxWidth: 360,
+               minHeight: 200, idealHeight: 300, maxHeight: 500)
         .onAppear {
-            viewModel.fetchComponents() // Fetch the components when the view appears
-            viewModel.startTimers()     // Start the timers
-            // startAutoFetch()            // Start the automatic fetch timer
+            viewModel.fetchComponents()
+            viewModel.startTimers()
         }
-        // .onDisappear {
-        //     stopAutoFetch()             // Stop the timer when the view disappears
-        // }
+        .onDisappear {
+            viewModel.stopTimers()
+        }
     }
-    
-    // // Function to start the timer
-    // private func startAutoFetch() {
-    //     timer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { _ in
-    //         viewModel.fetchComponents()
-    //     }
-    // }
-    
-    // // Function to stop the timer
-    // private func stopAutoFetch() {
-    //     timer?.invalidate()
-    //     timer = nil
-    // }
-    
+
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -95,6 +96,7 @@ struct GitHubView: View {
     }
 }
 
+@MainActor
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         GitHubView()
@@ -102,6 +104,5 @@ struct ContentView_Previews: PreviewProvider {
 }
 #Preview {
     GitHubView()
-        .frame(width: 200, height: 530)
 }
 
