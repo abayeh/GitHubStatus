@@ -56,10 +56,11 @@ open GitHubStatus.xcodeproj
 # Build and run (Cmd+R in Xcode)
 ```
 
-Or via command line:
+Or via command line (using target since shared schemes aren't checked in):
 
 ```bash
-xcodebuild -project GitHubStatus.xcodeproj -scheme GitHubStatus -configuration Debug build
+xcodebuild -project GitHubStatus.xcodeproj -target GitHubStatus -configuration Debug build
+xcodebuild test -project GitHubStatus.xcodeproj -target GitHubStatusTests -configuration Debug
 ```
 
 The built app will be in `~/Library/Developer/Xcode/DerivedData/`.

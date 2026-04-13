@@ -80,10 +80,7 @@ struct GitHubView: View {
         .frame(minWidth: 280, idealWidth: 300, maxWidth: 360,
                minHeight: 200, idealHeight: 300, maxHeight: 500)
         .onAppear {
-            viewModel.startTimers()
-        }
-        .onDisappear {
-            viewModel.stopTimers()
+            // Polling is managed by AppDelegate for continuous background updates
         }
     }
 

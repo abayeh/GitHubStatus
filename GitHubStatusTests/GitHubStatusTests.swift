@@ -23,7 +23,7 @@ final class GitHubStatusTests: XCTestCase {
         let values = ["none", "minor", "major", "critical"]
         for value in values {
             let data = Data("\"\(value)\"".utf8)
-            XCTAssertNoThrows {
+            XCTAssertNoThrow {
                 let decoded = try JSONDecoder().decode(OverallIndicator.self, from: data)
                 XCTAssertEqual(decoded.rawValue, value)
             }
@@ -64,7 +64,7 @@ final class GitHubStatusTests: XCTestCase {
         ]
         for json in jsonStrings {
             let data = Data(json.utf8)
-            XCTAssertNoThrows {
+            XCTAssertNoThrow {
                 let decoded = try JSONDecoder().decode(BlendedStatus.self, from: data)
                 XCTAssertFalse(decoded.rawValue.isEmpty)
             }

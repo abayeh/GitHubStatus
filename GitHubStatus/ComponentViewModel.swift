@@ -15,7 +15,10 @@ class ComponentViewModel: ObservableObject {
     @Published var lastUpdated: Date? = nil
     @Published var errorMessage: String? = nil
 
-    private let logger = Logger(subsystem: "com.githubstatus.app", category: "network")
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.githubstatus.app",
+        category: "network"
+    )
     private var refreshTask: Task<Void, Never>?
 
     func startTimers() {

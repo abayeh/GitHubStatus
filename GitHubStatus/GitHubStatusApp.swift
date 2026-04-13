@@ -30,6 +30,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Share the app delegate instance
         AppDelegate.shared = self
 
+        // Start continuous background polling from app launch
+        componentViewModel.startTimers()
+
         // Create the status item in the menu bar
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
