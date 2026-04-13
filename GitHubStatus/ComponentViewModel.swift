@@ -20,7 +20,7 @@ class ComponentViewModel: ObservableObject {
 
     func startTimers() {
         stopTimers()
-        refreshTask = Task {
+        refreshTask = Task { @MainActor in
             while !Task.isCancelled {
                 await fetchAll()
                 try? await Task.sleep(nanoseconds: 120_000_000_000) // 120 seconds
@@ -34,7 +34,7 @@ class ComponentViewModel: ObservableObject {
     }
 
     func fetchComponents() {
-        Task {
+        Task { @MainActor in
             await fetchAll()
         }
     }
