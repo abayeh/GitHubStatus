@@ -28,7 +28,7 @@ struct GitHubView: View {
                         .animation(.easeInOut(duration: 0.3), value: refreshRotation)
                 }
                 .buttonStyle(.plain)
-                .onReceive(viewModel.$lastUpdated) { _ in
+                .onReceive(viewModel.$lastUpdated.dropFirst()) { _ in
                     withAnimation {
                         refreshRotation += 360
                     }

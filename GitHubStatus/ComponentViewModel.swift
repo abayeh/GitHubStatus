@@ -19,6 +19,7 @@ class ComponentViewModel: ObservableObject {
     private var refreshTask: Task<Void, Never>?
 
     func startTimers() {
+        stopTimers()
         refreshTask = Task {
             while !Task.isCancelled {
                 await fetchAll()
@@ -44,9 +45,9 @@ class ComponentViewModel: ObservableObject {
         var successfulComponents = false
         var successfulStatus = false
 
-        // Run both fetches concurrently
-        async let componentsResult: [Component]? = fetchComponentsAsync()
-        async let statusResult: OverallStatus? = fetchOverallStatusAsync()
+        // Run both fetches concurrently, catching errors into optionals
+        async let componentsResult = safeFetchComponents()
+        async let statusResult = safeFetchOverallStatus()
 
         // Await both results
         let fetchedComponents = await componentsResult
@@ -92,6 +93,24 @@ class ComponentViewModel: ObservableObject {
         }
 
         updateMenubarIcon()
+    }
+
+    private func safeFetchComponents() async -> [Component]? {
+        do {
+            return try await fetchComponentsAsync()
+        } catch {
+            logger.error("Failed to fetch components: \(error)")
+            return nil
+        }
+    }
+
+    private func safeFetchOverallStatus() async -> OverallStatus? {
+        do {
+            return try await fetchOverallStatusAsync()
+        } catch {
+            logger.error("Failed to fetch overall status: \(error)")
+            return nil
+        }
     }
 
     private func fetchComponentsAsync() async throws -> [Component] {
