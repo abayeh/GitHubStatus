@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct GitHubView: View {
-    @StateObject private var viewModel = ComponentViewModel()
+    @EnvironmentObject var viewModel: ComponentViewModel
     @State private var refreshRotation: Double = 0
 
     var body: some View {
@@ -96,9 +96,11 @@ struct GitHubView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         GitHubView()
+            .environmentObject(ComponentViewModel())
     }
 }
 #Preview {
     GitHubView()
+        .environmentObject(ComponentViewModel())
 }
 

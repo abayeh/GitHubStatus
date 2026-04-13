@@ -36,7 +36,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the status item in the menu bar
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
-        // Experiment
         // Status bar icon SwiftUI view & a hosting view.
         let iconSwiftUI = ZStack(alignment:.center) {
             Text("GH")
@@ -61,8 +60,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             print("Failed to create status item button")  // Debug print to confirm button creation
         }
 
-        // Set up the popover content
-        let hostingController = NSHostingController(rootView: GitHubView())
+        // Set up the popover content with shared ViewModel
+        let contentView = GitHubView().environmentObject(componentViewModel)
+        let hostingController = NSHostingController(rootView: contentView)
         hostingController.view.frame = NSRect(x: 0, y: 0, width: 200, height: 530)
         
         popover.contentViewController = hostingController

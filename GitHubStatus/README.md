@@ -92,7 +92,7 @@ GitHubStatus/
 ## Running Tests
 
 ```bash
-xcodebuild test -project GitHubStatus.xcodeproj -scheme GitHubStatusTests
+xcodebuild test -project GitHubStatus.xcodeproj -target GitHubStatusTests -configuration Debug
 ```
 
 ## License
