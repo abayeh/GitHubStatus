@@ -116,7 +116,7 @@ class ComponentViewModel: ObservableObject {
         }
     }
 
-    private func fetchComponentsAsync() async throws -> [Component] {
+    nonisolated private func fetchComponentsAsync() async throws -> [Component] {
         let url = URL(string: "https://www.githubstatus.com/api/v2/components.json")!
         let (data, response) = try await URLSession.shared.data(from: url)
 
@@ -129,7 +129,7 @@ class ComponentViewModel: ObservableObject {
         return decodedResponse.components
     }
 
-    private func fetchOverallStatusAsync() async throws -> OverallStatus {
+    nonisolated private func fetchOverallStatusAsync() async throws -> OverallStatus {
         let url = URL(string: "https://www.githubstatus.com/api/v2/status.json")!
         let (data, response) = try await URLSession.shared.data(from: url)
 

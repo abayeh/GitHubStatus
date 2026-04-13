@@ -7,6 +7,7 @@
 
 import Cocoa
 import SwiftUI
+import os
 
 @main
 struct GitHubStatusApp: App {
@@ -25,6 +26,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popover = NSPopover()
     var componentViewModel = ComponentViewModel()
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "BlackbirdDataScience.GitHubStatus",
+        category: "app"
+    )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Share the app delegate instance
@@ -57,7 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.frame = iconView.frame
             button.action = #selector(togglePopover(_:))
         } else {
-            print("Failed to create status item button")  // Debug print to confirm button creation
+            logger.error("Failed to create status item button")
         }
 
         // Set up the popover content with shared ViewModel
