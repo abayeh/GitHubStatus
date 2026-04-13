@@ -27,6 +27,7 @@ enum ComponentStatus: String, Codable, CaseIterable {
         }
     }
     
+    @MainActor
     var color: Color {
         switch self {
         case .operational:
