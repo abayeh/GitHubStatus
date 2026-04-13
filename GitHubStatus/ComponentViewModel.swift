@@ -40,17 +40,57 @@ class ComponentViewModel: ObservableObject {
 
     private func fetchAll() async {
         errorMessage = nil
+        var hadAnyError = false
+        var successfulComponents = false
+        var successfulStatus = false
 
-        async let componentsResult: [Component] = fetchComponentsAsync()
-        async let statusResult: OverallStatus = fetchOverallStatusAsync()
+        // Run both fetches concurrently
+        async let componentsResult: [Component]? = fetchComponentsAsync()
+        async let statusResult: OverallStatus? = fetchOverallStatusAsync()
 
-        let (fetchedComponents, fetchedStatus) = await (try? await componentsResult ?? [], try? await statusResult ?? .placeholder)
+        // Await both results
+        let fetchedComponents = await componentsResult
+        let fetchedStatus = await statusResult
 
-        if !fetchedComponents.isEmpty {
-            components = fetchedComponents
+        // Process components result
+        if let comps = fetchedComponents {
+            self.components = comps
+            successfulComponents = true
+        } else {
+            hadAnyError = true
+            logger.error("Failed to fetch components")
         }
-        overallStatus = fetchedStatus
-        lastUpdated = Date()
+
+        // Process status result
+        if let status = fetchedStatus {
+            overallStatus = status
+            successfulStatus = true
+        } else {
+            hadAnyError = true
+            logger.error("Failed to fetch overall status")
+        }
+
+        // Only advance lastUpdated if at least one fetch succeeded
+        if successfulComponents || successfulStatus {
+            lastUpdated = Date()
+        }
+
+        // Show error if any fetch failed
+        if hadAnyError {
+            if !successfulComponents && !successfulStatus {
+                errorMessage = "Failed to fetch GitHub status"
+            } else if !successfulComponents {
+                errorMessage = "Failed to fetch component details"
+            } else if !successfulStatus {
+                errorMessage = "Failed to fetch overall status"
+            }
+            // Don't update components if components fetch failed - keep old data
+            if !successfulComponents && fetchedComponents == nil {
+                // Components failed but status may have succeeded
+                // Keep existing components to avoid showing empty list
+            }
+        }
+
         updateMenubarIcon()
     }
 
@@ -60,7 +100,6 @@ class ComponentViewModel: ObservableObject {
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            await MainActor.run { errorMessage = "Failed to fetch components" }
             throw URLError(.badServerResponse)
         }
 
@@ -74,11 +113,10 @@ class ComponentViewModel: ObservableObject {
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
-            await MainActor.run { errorMessage = "Failed to fetch overall status" }
             throw URLError(.badServerResponse)
         }
 
-        let decodedStatus = try JSONDecoder().decode(OverallStatusResponse.self, from: data)
+        let decodedStatus = try JSONDecoder().decode(StatusAPIResponse.self, from: data)
         return decodedStatus.status
     }
 

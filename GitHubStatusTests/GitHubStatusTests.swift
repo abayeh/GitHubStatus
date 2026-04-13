@@ -176,6 +176,6 @@ final class GitHubStatusTests: XCTestCase {
     func testOverallStatusPlaceholder() {
         let placeholder = OverallStatus.placeholder
         XCTAssertEqual(placeholder.indicator, .none)
-        XCTAssertEqual(placeholder.status, .allsystemsoperational)
+        XCTAssertEqual(placeholder.description, .allsystemsoperational)
     }
 }

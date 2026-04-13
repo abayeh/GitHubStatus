@@ -12,6 +12,10 @@ struct APIResponse: Codable {
     let components: [Component]
 }
 
+struct StatusAPIResponse: Codable {
+    let status: OverallStatus
+}
+
 struct PageInfo: Codable {
     let id: String
     let name: String
