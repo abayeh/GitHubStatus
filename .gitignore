@@ -1,0 +1,16 @@
+# Build output
+build/
+
+# Xcode
+*.xcuserdata/
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Derived Data
+DerivedData/
+
+# macOS
+.DS_Store

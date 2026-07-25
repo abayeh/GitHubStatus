@@ -12,8 +12,16 @@ struct APIResponse: Codable {
     let components: [Component]
 }
 
-struct StatusAPIResponse: Codable {
-    let status: OverallStatus
+struct SummaryAPIResponse: Codable {
+    let page: PageInfo
+    let components: [Component]
+    let incidents: [Incident]
+    let scheduledMaintenances: [ScheduledMaintenance]
+
+    enum CodingKeys: String, CodingKey {
+        case page, components, incidents
+        case scheduledMaintenances = "scheduled_maintenances"
+    }
 }
 
 struct PageInfo: Codable {

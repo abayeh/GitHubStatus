@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct OverallStatus: Codable {
+struct OverallStatus {
     let indicator: OverallIndicator
-    let description: BlendedStatus
-    
+    let description: String
+
     static var placeholder: OverallStatus {
-        OverallStatus(indicator: .none, description: .allsystemsoperational)
+        OverallStatus(indicator: .none, description: "All Systems Operational")
     }
 }

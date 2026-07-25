@@ -12,6 +12,8 @@ import os
 class ComponentViewModel: ObservableObject {
     @Published var components: [Component] = []
     @Published var overallStatus: OverallStatus = .placeholder
+    @Published var incidents: [Incident] = []
+    @Published var scheduledMaintenances: [ScheduledMaintenance] = []
     @Published var lastUpdated: Date? = nil
     @Published var errorMessage: String? = nil
 
@@ -44,80 +46,41 @@ class ComponentViewModel: ObservableObject {
 
     private func fetchAll() async {
         errorMessage = nil
-        var hadAnyError = false
-        var successfulComponents = false
-        var successfulStatus = false
 
-        // Run both fetches concurrently, catching errors into optionals
-        async let componentsResult = safeFetchComponents()
-        async let statusResult = safeFetchOverallStatus()
+        do {
+            let summary = try await fetchSummary()
+            self.components = summary.components
+            self.incidents = summary.incidents
+            self.scheduledMaintenances = summary.scheduledMaintenances
 
-        // Await both results
-        let fetchedComponents = await componentsResult
-        let fetchedStatus = await statusResult
+            // Derive overall status from active incidents and maintenance
+            let activeIncidents = summary.incidents.filter { $0.isActive }
+            let activeMaintenance = summary.scheduledMaintenances.filter { $0.isUpcomingOrActive }
 
-        // Process components result
-        if let comps = fetchedComponents {
-            self.components = comps
-            successfulComponents = true
-        } else {
-            hadAnyError = true
-            logger.error("Failed to fetch components")
-        }
+            if let worstIncident = activeIncidents.sorted(by: { $0.impact.order > $1.impact.order }).first {
+                self.overallStatus = OverallStatus(
+                    indicator: worstIncident.impact.toOverallIndicator,
+                    description: blendedStatusDescription(for: worstIncident.impact)
+                )
+            } else if activeMaintenance.contains(where: { $0.status == "in_progress" }) {
+                self.overallStatus = OverallStatus(
+                    indicator: .maintenance,
+                    description: "Partially Degraded Service"
+                )
+            } else {
+                self.overallStatus = OverallStatus(indicator: .none, description: "All Systems Operational")
+            }
 
-        // Process status result
-        if let status = fetchedStatus {
-            overallStatus = status
-            successfulStatus = true
-        } else {
-            hadAnyError = true
-            logger.error("Failed to fetch overall status")
-        }
-
-        // Only advance lastUpdated if at least one fetch succeeded
-        if successfulComponents || successfulStatus {
             lastUpdated = Date()
-        }
-
-        // Show error if any fetch failed
-        if hadAnyError {
-            if !successfulComponents && !successfulStatus {
-                errorMessage = "Failed to fetch GitHub status"
-            } else if !successfulComponents {
-                errorMessage = "Failed to fetch component details"
-            } else if !successfulStatus {
-                errorMessage = "Failed to fetch overall status"
-            }
-            // Don't update components if components fetch failed - keep old data
-            if !successfulComponents && fetchedComponents == nil {
-                // Components failed but status may have succeeded
-                // Keep existing components to avoid showing empty list
-            }
-        }
-
-        updateMenubarIcon()
-    }
-
-    private func safeFetchComponents() async -> [Component]? {
-        do {
-            return try await fetchComponentsAsync()
+            updateMenubarIcon()
         } catch {
-            logger.error("Failed to fetch components: \(error)")
-            return nil
+            errorMessage = "Failed to fetch GitHub status"
+            logger.error("Failed to fetch summary: \(error)")
         }
     }
 
-    private func safeFetchOverallStatus() async -> OverallStatus? {
-        do {
-            return try await fetchOverallStatusAsync()
-        } catch {
-            logger.error("Failed to fetch overall status: \(error)")
-            return nil
-        }
-    }
-
-    nonisolated private func fetchComponentsAsync() async throws -> [Component] {
-        let url = URL(string: "https://www.githubstatus.com/api/v2/components.json")!
+    nonisolated private func fetchSummary() async throws -> SummaryAPIResponse {
+        let url = URL(string: "https://www.githubstatus.com/api/v2/summary.json")!
         let (data, response) = try await URLSession.shared.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
@@ -125,21 +88,22 @@ class ComponentViewModel: ObservableObject {
             throw URLError(.badServerResponse)
         }
 
-        let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
-        return decodedResponse.components
+        return try JSONDecoder().decode(SummaryAPIResponse.self, from: data)
     }
 
-    nonisolated private func fetchOverallStatusAsync() async throws -> OverallStatus {
-        let url = URL(string: "https://www.githubstatus.com/api/v2/status.json")!
-        let (data, response) = try await URLSession.shared.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw URLError(.badServerResponse)
+    private func blendedStatusDescription(for impact: IncidentImpact) -> String {
+        switch impact {
+        case .none:
+            return "All Systems Operational"
+        case .minor:
+            return "Minor Service Outage"
+        case .major:
+            return "Partial System Outage"
+        case .critical:
+            return "Major Service Outage"
+        case .maintenance:
+            return "Partially Degraded Service"
         }
-
-        let decodedStatus = try JSONDecoder().decode(StatusAPIResponse.self, from: data)
-        return decodedStatus.status
     }
 
     private func updateMenubarIcon() {
@@ -153,6 +117,8 @@ class ComponentViewModel: ObservableObject {
             buttonColor = Color.orange
         case .critical:
             buttonColor = Color.red
+        case .maintenance:
+            buttonColor = Color.blue
         }
 
         let iconSwiftUI = ZStack(alignment: .center) {

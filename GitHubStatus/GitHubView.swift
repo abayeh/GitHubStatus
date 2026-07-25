@@ -43,6 +43,68 @@ struct GitHubView: View {
                     .padding(.horizontal, 4)
             }
 
+            // Active Incidents
+            let activeIncidents = viewModel.incidents.filter { $0.isActive }
+            if !activeIncidents.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Active Incidents")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.red)
+
+                    ForEach(activeIncidents, id: \.id) { incident in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(incident.name)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            HStack(spacing: 4) {
+                                Text(incident.impact.displayName)
+                                    .font(.caption2)
+                                    .foregroundColor(impactColor(incident.impact))
+                                if let latestUpdate = incident.incidentUpdates.first {
+                                    Text("·")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                    Text(latestUpdate.body.prefix(80))
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+                .padding(.bottom, 4)
+            }
+
+            // Scheduled Maintenance
+            let upcomingMaintenance = viewModel.scheduledMaintenances.filter { $0.isUpcomingOrActive }
+            if !upcomingMaintenance.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Scheduled Maintenance")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+
+                    ForEach(upcomingMaintenance, id: \.id) { maintenance in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(maintenance.name)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            Text(maintenance.status == "in_progress"
+                                 ? "In progress"
+                                 : "Starts: \(formatMaintenanceDate(maintenance.scheduledFor))")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+                .padding(.bottom, 4)
+            }
+
+            // Component Status List
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
                     ForEach(viewModel.components.filter { $0.name != "Visit www.githubstatus.com for more information" }, id: \.id) { component in
@@ -78,7 +140,7 @@ struct GitHubView: View {
         }
         .padding()
         .frame(minWidth: 280, idealWidth: 300, maxWidth: 360,
-               minHeight: 200, idealHeight: 300, maxHeight: 500)
+               minHeight: 200, idealHeight: 400, maxHeight: 600)
         .onAppear {
             // Polling is managed by AppDelegate for continuous background updates
         }
@@ -89,6 +151,31 @@ struct GitHubView: View {
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+
+    private func formatMaintenanceDate(_ isoString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = formatter.date(from: isoString) else { return isoString }
+        let displayFormatter = DateFormatter()
+        displayFormatter.dateStyle = .short
+        displayFormatter.timeStyle = .short
+        return displayFormatter.string(from: date)
+    }
+
+    private func impactColor(_ impact: IncidentImpact) -> Color {
+        switch impact {
+        case .none:
+            return .secondary
+        case .minor:
+            return .yellow
+        case .major:
+            return .orange
+        case .critical:
+            return .red
+        case .maintenance:
+            return .blue
+        }
     }
 }
 
@@ -103,4 +190,3 @@ struct ContentView_Previews: PreviewProvider {
     GitHubView()
         .environmentObject(ComponentViewModel())
 }
-

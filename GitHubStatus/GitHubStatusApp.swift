@@ -20,7 +20,7 @@ struct GitHubStatusApp: App {
     }
 }
 
-
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
     var statusItem: NSStatusItem?
@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         // Status bar icon SwiftUI view & a hosting view.
-        let iconSwiftUI = ZStack(alignment:.center) {
+        let iconSwiftUI = ZStack(alignment: .center) {
             Text("GH")
                 .font(.footnote)
                 .background(
@@ -50,13 +50,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         .fill(Color.blue)
                         .frame(width: 18, height: 18)
                 )
-                .frame(maxWidth: .infinity, maxHeight: .infinity,  alignment: .center)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .padding(.trailing, 5)
         }
 
         let iconView = NSHostingView(rootView: iconSwiftUI)
         iconView.frame = NSRect(x: 0, y: 0, width: 30, height: 18)
-        
+
         if let button = self.statusItem?.button {
             button.addSubview(iconView)
             button.frame = iconView.frame
@@ -68,10 +68,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up the popover content with shared ViewModel
         let contentView = GitHubView().environmentObject(componentViewModel)
         let hostingController = NSHostingController(rootView: contentView)
-        hostingController.view.frame = NSRect(x: 0, y: 0, width: 200, height: 530)
-        
+        hostingController.view.frame = NSRect(x: 0, y: 0, width: 320, height: 600)
+
         popover.contentViewController = hostingController
-        popover.contentSize = NSSize(width: 200, height: 530)
+        popover.contentSize = NSSize(width: 320, height: 600)
         popover.behavior = .transient
     }
 
